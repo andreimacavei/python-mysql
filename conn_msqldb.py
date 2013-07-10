@@ -12,10 +12,10 @@ def create_table():
     sql = """CREATE TABLE `details` (
              `id` int(11) NOT NULL AUTO_INCREMENT,
              `name` char(100) NOT NULL,
-             `telephone` char(50) NOT NULL,
-             `date` date NOT NULL,
+             `telephone` char(10) NOT NULL,
+             `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
              PRIMARY KEY (`id`)
-             ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8"""
+             ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8"""
     cursor.execute(sql)
     db.commit()
 
@@ -29,18 +29,37 @@ def drop_table():
         db.commit()
 
 
-def insert_record(name, phone, date):
-    sql = "INSERT INTO details(name, telephone, date) values ('{0}','{1}', '{2}')".format(name, phone, date)
+def insert_record(name, phone):
+    sql = "INSERT INTO details(name, telephone) values ('{0}','{1}')".format(name, phone)
     cursor.execute(sql)
     db.commit()
+
+def update_data(name, phone):
+    if name and phone:
+        sql = "SELECT * FROM details WHERE name='{}' AND telephone='{}'".format(name, phone)
+    elif name:
+        sql = "SELECT * FROM details WHERE name='{}'".format(name)
+    elif phone:
+        sql = "SELECT * FROM details WHERE telephone='{}'".format(phone)
+    else:
+        exit(0)
+    print sql
+
+    cursor.execute(sql)
+    results = cursor.fetchall()
+    print results
+    for row in results:
+        print row
+
+    sql = "UPDATE details SET %s=%s WHERE %s='%s'"
 
 def show_table():
     sql = "SELECT * FROM details"
     cursor.execute(sql)
     results = cursor.fetchall()
-    print "%3s %15s %15s %15s" % ('id', 'name', 'telephone', 'date')
+    print "%3s %15s %15s %25s" % ('id', 'name', 'telephone', 'date')
     for row in results:
-        print "%3i %15s %15s %15s" % (row[0], row[1], row[2], row[3])
+        print "%3i %15s %15s %25s" % (row[0], row[1], row[2], row[3])
 
 def delete_row(name):
     sql = "DELETE FROM details WHERE name = '{0}'".format(name)
@@ -56,18 +75,21 @@ class valid_date(argparse.Action):
         else:
             setattr(namespace, self.dest, values)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group() 
 
-    parser.add_argument('--name', default='')
-    parser.add_argument('--phone', default='')
-    parser.add_argument('--date', action=valid_date)
-    parser.add_argument('--addtable', default='')
-    parser.add_argument('--showtable', default='')
-    parser.add_argument('--delrow', default='')
+    parser.add_argument('-n', '--name', default='')
+    parser.add_argument('-p', '--phone', default='')
+#    parser.add_argument('--date', action=valid_date)
+    parser.add_argument('-w', '--withcreate', action="store_true")
+    parser.add_argument('-s', '--showtable', action="store_true")
+    parser.add_argument('-d', '--delrow', default='')
+    parser.add_argument('-u', '--update', default='')
     args = parser.parse_args()
 
-    if args.addtable :
+    if args.withcreate :
         drop_table()
         create_table()
 
@@ -79,7 +101,15 @@ if __name__ == "__main__":
         show_table()
         quit()
 
-    insert_record(args.name, args.phone, args.date)
+    if args.update :
+        update_data(args.name, args.phone)
+        quit()
+
+    if not args.name :
+        print "name is required"
+        quit()
+
+    insert_record(args.name, args.phone)
     print "Done"
 
     cursor.close()
