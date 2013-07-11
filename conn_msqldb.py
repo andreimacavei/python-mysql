@@ -31,27 +31,23 @@ def drop_table():
 
 def insert_record(name, phone):
     sql = "INSERT INTO details(name, telephone) values ('{0}','{1}')".format(name, phone)
-    cursor.execute(sql)
-    db.commit()
+    try:
+        cursor.execute(sql)
+        db.commit()
+    except:
+        db.rollback()
 
-def update_data(name, phone):
-    if name and phone:
-        sql = "SELECT * FROM details WHERE name='{}' AND telephone='{}'".format(name, phone)
-    elif name:
-        sql = "SELECT * FROM details WHERE name='{}'".format(name)
-    elif phone:
-        sql = "SELECT * FROM details WHERE telephone='{}'".format(phone)
-    else:
-        exit(0)
-    print sql
+def update_record(record_id, name, phone):
+    sql = "UPDATE details \
+           SET name='{0}', telephone='{1}' \
+           WHERE id={2}".format(name, phone, record_id) 
+    try :
+        cursor.execute(sql)
+    except OperationalError :
+        pass
+    else :
+        db.commit()
 
-    cursor.execute(sql)
-    results = cursor.fetchall()
-    print results
-    for row in results:
-        print row
-
-    sql = "UPDATE details SET %s=%s WHERE %s='%s'"
 
 def show_table():
     sql = "SELECT * FROM details"
@@ -61,8 +57,8 @@ def show_table():
     for row in results:
         print "%3i %15s %15s %25s" % (row[0], row[1], row[2], row[3])
 
-def delete_row(name):
-    sql = "DELETE FROM details WHERE name = '{0}'".format(name)
+def delete_record(record_id):
+    sql = "DELETE FROM details WHERE id = {0}".format(record_id)
     cursor.execute(sql)
     db.commit()
 
@@ -78,32 +74,33 @@ class valid_date(argparse.Action):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    group = parser.add_mutually_exclusive_group() 
+#    group = parser.add_mutually_exclusive_group() 
 
     parser.add_argument('-n', '--name', default='')
     parser.add_argument('-p', '--phone', default='')
 #    parser.add_argument('--date', action=valid_date)
-    parser.add_argument('-w', '--withcreate', action="store_true")
+    parser.add_argument('-w', '--with_create', action="store_true")
     parser.add_argument('-s', '--showtable', action="store_true")
-    parser.add_argument('-d', '--delrow', default='')
-    parser.add_argument('-u', '--update', default='')
+    parser.add_argument('-d', '--delrecord', default='')
+    parser.add_argument('-u', '--update_record', default='')
     args = parser.parse_args()
 
-    if args.withcreate :
+    if args.update_record :
+        update_record(args.update_record, args.name, args.phone)
+        quit()
+
+    if args.with_create :
         drop_table()
         create_table()
 
-    if args.delrow :
-        delete_row(args.delrow)
+    if args.delrecord :
+        delete_record(args.delrecord)
         quit() 
 
     if args.showtable :
         show_table()
         quit()
 
-    if args.update :
-        update_data(args.name, args.phone)
-        quit()
 
     if not args.name :
         print "name is required"
