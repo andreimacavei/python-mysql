@@ -29,8 +29,8 @@ def drop_table():
         db.commit()
 
 
-def insert_record(name, phone):
-    sql = "INSERT INTO details(name, telephone) values ('{0}','{1}')".format(name, phone)
+def insert_record(table, name, phone):
+    sql = "INSERT INTO {0}(name, telephone) values('{1}','{2}')".format(table, name, phone)
     try:
         cursor.execute(sql)
         db.commit()
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         print "name is required"
         quit()
 
-    insert_record(args.name, args.phone)
+    insert_record('details', args.name, args.phone)
     print "Done"
 
     cursor.close()
