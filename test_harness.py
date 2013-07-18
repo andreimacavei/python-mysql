@@ -5,9 +5,9 @@ from conn_msqldb import *
 class TestMySQLdbConnFunctions(unittest.TestCase):
 
     def setUp(self):
-        db = sqlite3.connect('example.db')
+        db  = sqlite3.connect('example.db')
         self.curs = db.cursor()
-        test_table = 'testdb'
+        self.test_table = 'testdb'
 
         # Create table
         """self.curs.execute('''CREATE TABLE testdb (
@@ -26,7 +26,7 @@ class TestMySQLdbConnFunctions(unittest.TestCase):
         date = datetime.now()
         
         # apply transformation
-        insert_record(test_table, name, telephone)
+        insert_record(self.test_table, name, telephone)
 
         last_id = self.curs.lastrowid
         results = self.curs.execute('SELECT * FROM %s WHERE id = %s' % (test_table, last_id))
