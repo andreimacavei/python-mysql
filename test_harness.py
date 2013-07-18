@@ -5,35 +5,45 @@ from conn_msqldb import *
 class TestMySQLdbConnFunctions(unittest.TestCase):
 
     def setUp(self):
-        conn = sqlite3.connect(':memory:')
-        self.curs = conn.cursor()
-        
-        # Create table
-        self.curs.execute('''CREATE TABLE test (
-                     id INTEGER AUTO_INCREMENT,
-                     name text,
-                     telephone text,
-                     date text
-                     )''')
+        db = sqlite3.connect('example.db')
+        self.curs = db.cursor()
+        test_table = 'testdb'
 
+        # Create table
+        """self.curs.execute('''CREATE TABLE testdb (
+                     id INTEGER PRIMARY KEY,
+                     name TEXT,
+                     telephone TEXT,
+                     date DATETIME DEFAULT CURRENT_TIMESTAMP
+                     )''')"""
     def tearDown(self):
         self.curs.close()    
 
-    def test_that_a_record_was_inserted(self):
+    def test_insert_record(self):
         # define input
         name = 'Andrei'
         telephone = '0737037718'
         date = datetime.now()
-        pre_record_id = self.curs.execute('select last_insert_rowid()')
         
         # apply transformation
-        insert_record(name, telephone)
+        insert_record(test_table, name, telephone)
 
-        record_id = self.curs.execute('select last_insert_rowid()')
-        result_row = self.curs.execute('select * from test order by rowid desc limit 1')
-        row = self.curs.fetchone()
-       
+        last_id = self.curs.lastrowid
+        results = self.curs.execute('SELECT * FROM %s WHERE id = %s' % (test_table, last_id))
+        print results
         # assert
+
+    def test_update_record(self):
+        # define input
+        name = 'Andrei'
+        telephone = '0723474474'
+        name_new = 'Andrei Gabriel'
+        telephone_new = '0737321443'
+
+        # apply transformation
+        
+
+
 
 unittest.main()
 #suite = unittest.TestLoader().loadTestsFromTestCase(TestMySQLdbConnFunctions)

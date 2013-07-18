@@ -5,62 +5,80 @@ import argparse
 from _mysql_exceptions import OperationalError
 from datetime import datetime
 
-db = MySQLdb.connect(host="localhost", user="kheops", passwd="kheops", db="example")
-cursor = db.cursor()
+db = None
 
-def create_table():
-    sql = """CREATE TABLE `details` (
+def create_connection(host="localhost", user="kheops", passwd="kheops", db="example"):
+    return MySQLdb.connect(host, user, passwd, db)
+
+def create_table(table_name="testdb"):
+    sql = """CREATE TABLE `{0}` (
              `id` int(11) NOT NULL AUTO_INCREMENT,
              `name` char(100) NOT NULL,
              `telephone` char(10) NOT NULL,
              `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
              PRIMARY KEY (`id`)
-             ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8"""
-    cursor.execute(sql)
-    db.commit()
+             ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8""".format(table_name)   
+    with db:
 
-def drop_table():
-    sql = "drop table details"
-    try:
+        cursor = db.cursor()
+        cursor.execute("DROP TABLE IF EXISTS {}".format(table_name))
         cursor.execute(sql)
-    except OperationalError :
-        pass
-    else:
-        db.commit()
 
-
-def insert_record(table, name, phone):
-    sql = "INSERT INTO {0}(name, telephone) values('{1}','{2}')".format(table, name, phone)
-    try:
+def drop_table(table_name="testdb"):
+    sql = "drop table {}".format(table_name)
+    with db:
+        cursor = db.cursor()
         cursor.execute(sql)
-        db.commit()
-    except:
-        db.rollback()
 
-def update_record(record_id, name, phone):
-    sql = "UPDATE details \
-           SET name='{0}', telephone='{1}' \
-           WHERE id={2}".format(name, phone, record_id) 
-    try :
+def show_table(table_name="testdb"):
+    sql = "SELECT * FROM {}".format(table_name)
+    with db:
+        cursor = db.cursor()
         cursor.execute(sql)
-    except OperationalError :
-        pass
-    else :
-        db.commit()
 
+        results = cursor.fetchall()
+        print "%3s %15s %15s %25s" % ('id', 'name', 'telephone', 'date')
+        for row in results:
+            print "%3i %15s %15s %25s" % (row[0], row[1], row[2], row[3])
 
-def show_table():
-    sql = "SELECT * FROM details"
-    cursor.execute(sql)
-    results = cursor.fetchall()
-    print "%3s %15s %15s %25s" % ('id', 'name', 'telephone', 'date')
-    for row in results:
-        print "%3i %15s %15s %25s" % (row[0], row[1], row[2], row[3])
+def insert_record(name, phone, table_name="testdb"):
+    sql = "INSERT INTO {0}(name, telephone) values('{1}','{2}')".format(table_name, name, phone)
+    
+    with db:
+        cursor = db.cursor()
+        cursor.execute(sql)
+        print "Record with id = %d inserted" % cursor.lastrowid
 
-def delete_record(record_id):
-    sql = "DELETE FROM details WHERE id = {0}".format(record_id)
-    cursor.execute(sql)
-    db.commit()
+def update_record(record_id, name, phone, table_name="testdb"):
+    sql = "UPDATE {0} \
+           SET name='{1}', telephone='{2}' \
+           WHERE id={3}".format(table_name, name, phone, record_id) 
+        
+    with db:
+        cursor = db.cursor()
+        cursor.execute(sql)
+        print "Record with id = %d updated" % (int(record_id),)
+
+def delete_record(record_id, table_name="testdb"):
+    sql = "DELETE FROM {0} WHERE id = {1}".format(table_name, record_id)
+
+    with db:
+        cursor = db.cursor()
+        cursor.execute(sql)
+        print "Record with id = %d deleted" % (int(record_id),)
+
+def get_record(record_id, table_name="testdb"):
+    sql = "SELECT * FROM {} WHERE id = {}".format(table_name, record_id)
+    
+    with db:
+        cursor = db.cursor()
+        cursor.execute(sql)
+        results = cursor.fetchall()
+
+        print "%3s %15s %15s %25s" % ('id', 'name', 'telephone', 'date')
+        for row in results:
+            print "%3i %15s %15s %25s" % (row[0], row[1], row[2], row[3])
+
 
 class valid_date(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -73,7 +91,10 @@ class valid_date(argparse.Action):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+   
+    db = create_connection()
+    
+    parser = argparse.ArgumentParser(description='A wrapper in python for MySQLdb API')
 #    group = parser.add_mutually_exclusive_group() 
 
     parser.add_argument('-n', '--name', default='')
@@ -83,6 +104,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--showtable', action="store_true")
     parser.add_argument('-d', '--delrecord', default='')
     parser.add_argument('-u', '--update_record', default='')
+    parser.add_argument('-g', '--get_record', default='')
     args = parser.parse_args()
 
     if args.update_record :
@@ -90,12 +112,15 @@ if __name__ == "__main__":
         quit()
 
     if args.with_create :
-        drop_table()
         create_table()
 
     if args.delrecord :
         delete_record(args.delrecord)
         quit() 
+    
+    if args.get_record :
+        get_record(args.get_record)
+        quit()
 
     if args.showtable :
         show_table()
@@ -106,7 +131,4 @@ if __name__ == "__main__":
         print "name is required"
         quit()
 
-    insert_record('details', args.name, args.phone)
-    print "Done"
-
-    cursor.close()
+    insert_record(args.name, args.phone)
