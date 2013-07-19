@@ -59,13 +59,20 @@ def update_record(record_id, name, phone, table_name="testdb"):
         cursor.execute(sql)
         print "Record with id = %d updated" % (int(record_id),)
 
-def delete_record(record_id, table_name="testdb"):
-    sql = "DELETE FROM {0} WHERE id = {1}".format(table_name, record_id)
+def delete_record(record_ids, table_name="testdb"):
+
+    if len(record_ids) == 1 :
+        sql = "DELETE FROM {0} WHERE id = {1}".format(table_name, *record_ids)
+    elif len(record_ids) == 2 :
+        sql = "DELETE FROM {0} WHERE id between {1} and {2}".format(table_name, record_ids[0], record_ids[1])
+    else :
+        sql = "DELETE FROM {0} WHERE id in {1}".format(table_name, *record_ids)
+        
 
     with db:
         cursor = db.cursor()
         cursor.execute(sql)
-        print "Record with id = %d deleted" % (int(record_id),)
+        print "Record(s) deleted" 
 
 def get_record(record_id, table_name="testdb"):
     sql = "SELECT * FROM {} WHERE id = {}".format(table_name, record_id)
@@ -102,7 +109,7 @@ if __name__ == "__main__":
 #    parser.add_argument('--date', action=valid_date)
     parser.add_argument('-w', '--with_create', action="store_true")
     parser.add_argument('-s', '--showtable', action="store_true")
-    parser.add_argument('-d', '--delrecord', default='')
+    parser.add_argument('-d', '--delrecord', nargs='+')
     parser.add_argument('-u', '--update_record', default='')
     parser.add_argument('-g', '--get_record', default='')
     args = parser.parse_args()
