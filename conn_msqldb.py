@@ -70,7 +70,8 @@ def delete_record(record_ids, table_name="testdb"):
     elif len(record_ids) == 2 :
         sql = "DELETE FROM {0} WHERE id between {1} and {2}".format(table_name, record_ids[0], record_ids[1])
     else :
-        sql = "DELETE FROM {0} WHERE id in {1}".format(table_name, *record_ids)
+        record_ids = tuple(record_ids)
+        sql = "DELETE FROM {0} WHERE id in {1}".format(table_name, record_ids)
         
     with db:
         cursor = db.cursor()
