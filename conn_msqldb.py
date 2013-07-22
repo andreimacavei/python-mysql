@@ -41,8 +41,12 @@ def show_table(table_name="testdb"):
         for row in results:
             print "%3i %15s %15s %25s" % (row[0], row[1], row[2], row[3])
 
-def insert_record(name, phone, table_name="testdb"):
-    sql = "INSERT INTO {0}(name, telephone) values('{1}','{2}')".format(table_name, name, phone)
+def insert_record(name, phone, table_name="testdb", record_id = ''):
+    if record_id:
+        sql = "INSERT INTO {0}(id, name, telephone) values({1},'{2}','{3}')".format(table_name, record_id, 
+                                                                                name, phone)
+    else:
+        sql = "INSERT INTO {0}(name, telephone) values('{1}','{2}')".format(table_name, name, phone)
     
     with db:
         cursor = db.cursor()
@@ -68,7 +72,6 @@ def delete_record(record_ids, table_name="testdb"):
     else :
         sql = "DELETE FROM {0} WHERE id in {1}".format(table_name, *record_ids)
         
-
     with db:
         cursor = db.cursor()
         cursor.execute(sql)
@@ -80,12 +83,12 @@ def get_record(record_id, table_name="testdb"):
     with db:
         cursor = db.cursor()
         cursor.execute(sql)
-        results = cursor.fetchall()
+        row = cursor.fetchone()
 
         print "%3s %15s %15s %25s" % ('id', 'name', 'telephone', 'date')
-        for row in results:
-            print "%3i %15s %15s %25s" % (row[0], row[1], row[2], row[3])
-
+        print "%3i %15s %15s %25s" % (row[0], row[1], row[2], row[3])
+    
+    return row
 
 class valid_date(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -106,6 +109,7 @@ if __name__ == "__main__":
 
     parser.add_argument('-n', '--name', default='')
     parser.add_argument('-p', '--phone', default='')
+    parser.add_argument('-i', '--id', default='')
 #    parser.add_argument('--date', action=valid_date)
     parser.add_argument('-w', '--with_create', action="store_true")
     parser.add_argument('-s', '--showtable', action="store_true")
@@ -138,4 +142,4 @@ if __name__ == "__main__":
         print "name is required"
         quit()
 
-    insert_record(args.name, args.phone)
+    insert_record(args.name, args.phone, record_id=args.id)
