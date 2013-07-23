@@ -67,36 +67,69 @@ class TestMySQLdbConnFunctions(unittest.TestCase):
 
         assertFalse(record, record_updated)
 
-    def test_get_record(self)
+    def test_get_one_record(self):
         
         # define input
+        record_ids = [5]
         insert_record('Andrei', '0123456789', self.test_table, 5)
-        last_record_inserted = get_record(5, self.test_table)
+        last_record_inserted = get_record(record_ids, self.test_table)
 
         # test success        
         assertTrue(last_record_inserted)
 
-    def test_delete_record_one(self)
+    def test_get_many_records(self):
+
+        records_in = []
+        records_out = []
+        records_ids = []
 
         # define input
+        insert_record('Ana', '1234509876', self.test_table, 3)
+        insert_record('Irina', '0987612345', self.test_table,4)
+        insert_record('Suzana', '5432167890', self.test_table,5)
+
+        records_in.append('3Ana1234509876')
+        records_out.append('4Irina0987612345')
+        records_ids = [3, 4]
+        
+        # test success 
+
+        results = get_record(records_ids, self.test_table)
+        for row in results:
+            records_out.append(''.join([str(field) for field in row[:3]]))
+
+        assertEqual(sorted(records_in), sorted(records_out))
+
+    def test_delete_one_record(self):
+
+        # define input
+        record_ids = []
         insert_record('Andrei', '0123456789', self.test_table, 11)
         insert_record('Gabriel', '9876543210', self.test_table, 22)
 
-        delete_record(11, self.test_table)
+        record_ids = [11]
+        delete_record(record_ids, self.test_table)
 
         # test that record was deleted
-        record = get_record(11, self.test_table)
+        record = get_record(record_ids, self.test_table)
         assertFalse(record)
 
         # test raise error
 
-    def test_delete_record_many(self)
+    def test_delete_many_records(self):
 
         # define input
+        record_ids = []
         insert_record('Andrei', '0123456789', self.test_table, 11)
         insert_record('Gabriel', '9876543210', self.test_table, 22)
         insert_record('George', '5432106789', self.test_table, 33)
 
+        record_ids = [11, 33]
+        delete_record(record_ids, self.test_table)
+
+        # test that two records were deleted
+        records = get_record(record_ids, self.test_table)
+        assertFalse(records)
 
 
 if __name__ == '__main__':

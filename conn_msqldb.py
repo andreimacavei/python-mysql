@@ -68,28 +68,36 @@ def delete_record(record_ids, table_name="testdb"):
     if len(record_ids) == 1 :
         sql = "DELETE FROM {0} WHERE id = {1}".format(table_name, *record_ids)
     elif len(record_ids) == 2 :
-        sql = "DELETE FROM {0} WHERE id between {1} and {2}".format(table_name, record_ids[0], record_ids[1])
+        sql = "DELETE FROM {0} WHERE id BETWEEN {1} and {2}".format(table_name, record_ids[0], record_ids[1])
     else :
         record_ids = tuple(record_ids)
-        sql = "DELETE FROM {0} WHERE id in {1}".format(table_name, record_ids)
+        sql = "DELETE FROM {0} WHERE id IN {1}".format(table_name, record_ids)
         
     with db:
         cursor = db.cursor()
         cursor.execute(sql)
         print "Record(s) deleted" 
 
-def get_record(record_id, table_name="testdb"):
-    sql = "SELECT * FROM {} WHERE id = {}".format(table_name, record_id)
+def get_record(record_ids, table_name="testdb"):
+
+    if len(record_ids) == 1:
+        sql = "SELECT * FROM {0} WHERE id = {1}".format(table_name, *record_ids)
+    elif len(record_ids) == 2:
+        sql = "SELECT * FROM {0} WHERE id BETWEEN {1} AND {2}".format(table_name, record_ids[0], record_ids[1])
+    else:
+        record_ids = tuple(record_ids)
+        sql = "SELECT * FROM {0} WHERE id IN {1}".format(table_name, record_ids)
     
     with db:
         cursor = db.cursor()
         cursor.execute(sql)
-        row = cursor.fetchone()
+        results = cursor.fetchall()
 
         print "%3s %15s %15s %25s" % ('id', 'name', 'telephone', 'date')
-        print "%3i %15s %15s %25s" % (row[0], row[1], row[2], row[3])
+        for row in results:
+            print "%3i %15s %15s %25s" % (row[0], row[1], row[2], row[3])
     
-    return row
+    return results
 
 class valid_date(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -116,7 +124,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--showtable', action="store_true")
     parser.add_argument('-d', '--delrecord', nargs='+')
     parser.add_argument('-u', '--update_record', default='')
-    parser.add_argument('-g', '--get_record', default='')
+    parser.add_argument('-g', '--get_record', nargs='+')
     args = parser.parse_args()
 
     if args.update_record :
