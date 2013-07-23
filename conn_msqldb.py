@@ -5,12 +5,11 @@ import argparse
 from _mysql_exceptions import OperationalError
 from datetime import datetime
 
-db = None
 
 def create_connection(host="localhost", user="kheops", passwd="kheops", db="example"):
     return MySQLdb.connect(host, user, passwd, db)
 
-def create_table(table_name="testdb"):
+def create_table(db, table_name="testdb"):
     sql = """CREATE TABLE `{0}` (
              `id` int(11) NOT NULL AUTO_INCREMENT,
              `name` char(100) NOT NULL,
@@ -24,13 +23,14 @@ def create_table(table_name="testdb"):
         cursor.execute("DROP TABLE IF EXISTS {}".format(table_name))
         cursor.execute(sql)
 
-def drop_table(table_name="testdb"):
+# Unused
+def drop_table(db, table_name="testdb"):
     sql = "drop table {}".format(table_name)
     with db:
         cursor = db.cursor()
         cursor.execute(sql)
 
-def show_table(table_name="testdb"):
+def show_table(db, table_name="testdb"):
     sql = "SELECT * FROM {}".format(table_name)
     with db:
         cursor = db.cursor()
@@ -41,7 +41,7 @@ def show_table(table_name="testdb"):
         for row in results:
             print "%3i %15s %15s %25s" % (row[0], row[1], row[2], row[3])
 
-def insert_record(name, phone, table_name="testdb", record_id = ''):
+def insert_record(db, name, phone, table_name="testdb", record_id = ''):
     if record_id:
         sql = "INSERT INTO {0}(id, name, telephone) values({1},'{2}','{3}')".format(table_name, record_id, 
                                                                                 name, phone)
@@ -53,7 +53,7 @@ def insert_record(name, phone, table_name="testdb", record_id = ''):
         cursor.execute(sql)
         print "Record with id = %d inserted" % cursor.lastrowid
 
-def update_record(record_id, name, phone, table_name="testdb"):
+def update_record(db, record_id, name, phone, table_name="testdb"):
     sql = "UPDATE {0} \
            SET name='{1}', telephone='{2}' \
            WHERE id={3}".format(table_name, name, phone, record_id) 
@@ -63,7 +63,7 @@ def update_record(record_id, name, phone, table_name="testdb"):
         cursor.execute(sql)
         print "Record with id = %d updated" % (int(record_id),)
 
-def delete_record(record_ids, table_name="testdb"):
+def delete_record(db, record_ids, table_name="testdb"):
 
     if len(record_ids) == 1 :
         sql = "DELETE FROM {0} WHERE id = {1}".format(table_name, *record_ids)
@@ -78,7 +78,7 @@ def delete_record(record_ids, table_name="testdb"):
         cursor.execute(sql)
         print "Record(s) deleted" 
 
-def get_record(record_ids, table_name="testdb"):
+def get_record(db, record_ids, table_name="testdb"):
 
     if len(record_ids) == 1:
         sql = "SELECT * FROM {0} WHERE id = {1}".format(table_name, *record_ids)
@@ -128,22 +128,22 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.update_record :
-        update_record(args.update_record, args.name, args.phone)
+        update_record(db, args.update_record, args.name, args.phone)
         quit()
 
     if args.with_create :
-        create_table()
+        create_table(db)
 
     if args.delrecord :
-        delete_record(args.delrecord)
+        delete_record(db, args.delrecord)
         quit() 
     
     if args.get_record :
-        get_record(args.get_record)
+        get_record(db, args.get_record)
         quit()
 
     if args.showtable :
-        show_table()
+        show_table(db)
         quit()
 
 
@@ -151,4 +151,4 @@ if __name__ == "__main__":
         print "name is required"
         quit()
 
-    insert_record(args.name, args.phone, record_id=args.id)
+    insert_record(db, args.name, args.phone, record_id=args.id)

@@ -5,8 +5,8 @@ from conn_msqldb import *
 class TestMySQLdbConnFunctions(unittest.TestCase):
 
     def setUp(self):
-        db  = sqlite3.connect('example.db')
-        self.curs = db.cursor()
+        self.conn = sqlite3.connect('example.db')
+        self.curs = self.conn.cursor()
         self.test_table = 'testdb'
 
         # Create table
@@ -26,7 +26,7 @@ class TestMySQLdbConnFunctions(unittest.TestCase):
         telephone = '0123456789'
         
         # test success
-        insert_record(name, telephone, self.test_table)
+        insert_record(self.conn, name, telephone, self.test_table)
         last_id = self.curs.lastrowid
 
         self.curs.execute('SELECT * FROM %s ORDER BY date DESC' % (self.test_table,))
@@ -35,7 +35,7 @@ class TestMySQLdbConnFunctions(unittest.TestCase):
 
         # test failure (should raise _mysql_exceptions.IntegrityError: 1062)
         with self.assertRaises(IntegrityError) as err:
-            insert_record(name, telephone, self.test_table, last_id)
+            insert_record(self.conn, name, telephone, self.test_table, last_id)
         
         excep = err.exception
         self.assertEqual(excep.error_code, 1062)
@@ -44,7 +44,7 @@ class TestMySQLdbConnFunctions(unittest.TestCase):
     def test_update_record(self):
        
         # define input
-        insert_record('Andrei', '0123456789', self.test_table)
+        insert_record(self.conn, 'Andrei', '0123456789', self.test_table)
         last_id = self.curs.lastrowid
 
         self.curs.execute('SELECT * FROM %s ORDER BY date DESC' % (self.test_table,))
@@ -52,7 +52,7 @@ class TestMySQLdbConnFunctions(unittest.TestCase):
         record = ''.join([str(field) for field in row[:3]])
 
         # test success
-        update_record(last_id, 'Andrei', '0123456789', self.test_table)
+        update_record(self.conn, last_id, 'Andrei', '0123456789', self.test_table)
         
         self.curs.execute('SELECT * FROM %s ORDER BY date DESC' % (self.test_table,))
         row = self.curs.fetchone()
@@ -60,7 +60,8 @@ class TestMySQLdbConnFunctions(unittest.TestCase):
 
         assertEqual(record, record_same)
 
-        update_record(last_id, 'Andrei', '9876543210', self.test_table)
+        # test failure
+        update_record(self.conn, last_id, 'Andrei', '9876543210', self.test_table)
         self.curs.execute('SELECT * FROM %s ORDER BY date DESC' % (self.test_table,))
         row = self.curs.fetchone()
         record_updated = ''.join([str(field) for field in row[:3]])
@@ -71,8 +72,8 @@ class TestMySQLdbConnFunctions(unittest.TestCase):
         
         # define input
         record_ids = [5]
-        insert_record('Andrei', '0123456789', self.test_table, 5)
-        last_record_inserted = get_record(record_ids, self.test_table)
+        insert_record(self.conn, 'Andrei', '0123456789', self.test_table, 5)
+        last_record_inserted = get_record(self.conn, record_ids, self.test_table)
 
         # test success        
         assertTrue(last_record_inserted)
@@ -84,17 +85,16 @@ class TestMySQLdbConnFunctions(unittest.TestCase):
         records_ids = []
 
         # define input
-        insert_record('Ana', '1234509876', self.test_table, 3)
-        insert_record('Irina', '0987612345', self.test_table,4)
-        insert_record('Suzana', '5432167890', self.test_table,5)
+        insert_record(self.conn, 'Ana', '1234509876', self.test_table, 3)
+        insert_record(self.conn, 'Irina', '0987612345', self.test_table,4)
+        insert_record(self.conn, 'Suzana', '5432167890', self.test_table,5)
 
         records_in.append('3Ana1234509876')
         records_out.append('4Irina0987612345')
         records_ids = [3, 4]
         
         # test success 
-
-        results = get_record(records_ids, self.test_table)
+        results = get_record(self.conn, records_ids, self.test_table)
         for row in results:
             records_out.append(''.join([str(field) for field in row[:3]]))
 
@@ -104,14 +104,14 @@ class TestMySQLdbConnFunctions(unittest.TestCase):
 
         # define input
         record_ids = []
-        insert_record('Andrei', '0123456789', self.test_table, 11)
-        insert_record('Gabriel', '9876543210', self.test_table, 22)
+        insert_record(self.conn, 'Andrei', '0123456789', self.test_table, 11)
+        insert_record(self.conn, 'Gabriel', '9876543210', self.test_table, 22)
 
         record_ids = [11]
-        delete_record(record_ids, self.test_table)
+        delete_record(self.conn, record_ids, self.test_table)
 
         # test that record was deleted
-        record = get_record(record_ids, self.test_table)
+        record = get_record(self.conn, record_ids, self.test_table)
         assertFalse(record)
 
         # test raise error
@@ -120,15 +120,15 @@ class TestMySQLdbConnFunctions(unittest.TestCase):
 
         # define input
         record_ids = []
-        insert_record('Andrei', '0123456789', self.test_table, 11)
-        insert_record('Gabriel', '9876543210', self.test_table, 22)
-        insert_record('George', '5432106789', self.test_table, 33)
+        insert_record(self.conn, 'Andrei', '0123456789', self.test_table, 11)
+        insert_record(self.conn, 'Gabriel', '9876543210', self.test_table, 22)
+        insert_record(self.conn, 'George', '5432106789', self.test_table, 33)
 
         record_ids = [11, 33]
-        delete_record(record_ids, self.test_table)
+        delete_record(self.conn, record_ids, self.test_table)
 
         # test that two records were deleted
-        records = get_record(record_ids, self.test_table)
+        records = get_record(self.conn, record_ids, self.test_table)
         assertFalse(records)
 
 
