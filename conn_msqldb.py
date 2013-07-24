@@ -99,15 +99,18 @@ def get_record(db, record_ids, table_name="testdb"):
     
     return results
 
-class valid_date(argparse.Action):
+class valid_telephone(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
+        
         try:
-            date = datetime.strptime(values, '%Y-%m-%d')
+            float(values)
         except ValueError:
-            raise argparse.ArgumentTypeError("{0} is not a valid date".format(values))
+            raise argparse.ArgumentTypeError("{} is not a valid telephone number".format(values))
         else:
+            if len(str(values)) != 10:
+                raise argparse.ArgumentTypeError("telephone must have 10 digits")
             setattr(namespace, self.dest, values)
-
+            
 
 if __name__ == "__main__":
    
@@ -117,9 +120,8 @@ if __name__ == "__main__":
 #    group = parser.add_mutually_exclusive_group() 
 
     parser.add_argument('-n', '--name', default='')
-    parser.add_argument('-p', '--phone', default='')
+    parser.add_argument('-p', '--phone', action=valid_telephone)
     parser.add_argument('-i', '--id', default='')
-#    parser.add_argument('--date', action=valid_date)
     parser.add_argument('-w', '--with_create', action="store_true")
     parser.add_argument('-s', '--showtable', action="store_true")
     parser.add_argument('-d', '--delrecord', nargs='+')
