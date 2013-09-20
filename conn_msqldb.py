@@ -6,7 +6,7 @@ from _mysql_exceptions import OperationalError
 from datetime import datetime
 
 
-def create_connection(host="localhost", user="kheops", passwd="kheops", db="example"):
+def create_connection(host="localhost", user="kheops", passwd="neoman", db="example"):
     return MySQLdb.connect(host, user, passwd, db)
 
 def create_table(db, table_name="testdb"):
@@ -16,7 +16,7 @@ def create_table(db, table_name="testdb"):
              `telephone` char(10) NOT NULL,
              `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
              PRIMARY KEY (`id`)
-             ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8""".format(table_name)   
+             ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8""".format(table_name)
     with db:
 
         cursor = db.cursor()
@@ -42,12 +42,13 @@ def show_table(db, table_name="testdb"):
             print "%3i %15s %15s %25s" % (row[0], row[1], row[2], row[3])
 
 def insert_record(db, name, phone, table_name="testdb", record_id = ''):
+
     if record_id:
-        sql = "INSERT INTO {0}(id, name, telephone) values({1},'{2}','{3}')".format(table_name, record_id, 
+        sql = "INSERT INTO {0}(id, name, telephone) values({1},'{2}','{3}')".format(table_name, record_id,
                                                                                 name, phone)
     else:
         sql = "INSERT INTO {0}(name, telephone) values('{1}','{2}')".format(table_name, name, phone)
-    
+
     with db:
         cursor = db.cursor()
         cursor.execute(sql)
@@ -56,8 +57,8 @@ def insert_record(db, name, phone, table_name="testdb", record_id = ''):
 def update_record(db, record_id, name, phone, table_name="testdb"):
     sql = "UPDATE {0} \
            SET name='{1}', telephone='{2}' \
-           WHERE id={3}".format(table_name, name, phone, record_id) 
-        
+           WHERE id={3}".format(table_name, name, phone, record_id)
+
     with db:
         cursor = db.cursor()
         cursor.execute(sql)
@@ -72,11 +73,11 @@ def delete_record(db, record_ids, table_name="testdb"):
     else :
         record_ids = tuple(record_ids)
         sql = "DELETE FROM {0} WHERE id IN {1}".format(table_name, record_ids)
-        
+
     with db:
         cursor = db.cursor()
         cursor.execute(sql)
-        print "Record(s) deleted" 
+        print "Record(s) deleted"
 
 def get_record(db, record_ids, table_name="testdb"):
 
@@ -87,7 +88,7 @@ def get_record(db, record_ids, table_name="testdb"):
     else:
         record_ids = tuple(record_ids)
         sql = "SELECT * FROM {0} WHERE id IN {1}".format(table_name, record_ids)
-    
+
     with db:
         cursor = db.cursor()
         cursor.execute(sql)
@@ -96,12 +97,12 @@ def get_record(db, record_ids, table_name="testdb"):
         print "%3s %15s %15s %25s" % ('id', 'name', 'telephone', 'date')
         for row in results:
             print "%3i %15s %15s %25s" % (row[0], row[1], row[2], row[3])
-    
+
     return results
 
 class valid_telephone(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        
+
         try:
             float(values)
         except ValueError:
@@ -110,14 +111,14 @@ class valid_telephone(argparse.Action):
             if len(str(values)) != 10:
                 raise argparse.ArgumentTypeError("telephone must have 10 digits")
             setattr(namespace, self.dest, values)
-            
+
 
 if __name__ == "__main__":
-   
+
     db = create_connection()
-    
+
     parser = argparse.ArgumentParser(description='A wrapper in python for MySQLdb API')
-#    group = parser.add_mutually_exclusive_group() 
+#    group = parser.add_mutually_exclusive_group()
 
     parser.add_argument('-n', '--name', default='')
     parser.add_argument('-p', '--phone', action=valid_telephone)
@@ -138,8 +139,8 @@ if __name__ == "__main__":
 
     if args.delrecord :
         delete_record(db, args.delrecord)
-        quit() 
-    
+        quit()
+
     if args.get_record :
         get_record(db, args.get_record)
         quit()
