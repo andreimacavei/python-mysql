@@ -6,7 +6,7 @@ from _mysql_exceptions import OperationalError
 from datetime import datetime
 
 
-def create_connection(host="localhost", user="kheops", passwd="neoman", db="example"):
+def create_connection(host="localhost", user="kheops", passwd="", db="example"):
     return MySQLdb.connect(host, user, passwd, db)
 
 def create_table(db, table_name="testdb"):
